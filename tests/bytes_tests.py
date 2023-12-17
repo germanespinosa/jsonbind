@@ -1,15 +1,15 @@
+import unittest
 import sys
 sys.path.append('..')
-from jsonbind import JsonSerialization
-import unittest
+from jsonbind import Serialization
 
 
-class Bytes(unittest.TestCase):
+class BytesTests(unittest.TestCase):
     def test_bytes_serialization(self):
-        self.assertEqual(JsonSerialization.serialize("Hello".encode("ascii")),'"SGVsbG8="')
+        self.assertEqual(Serialization.serialize(b"Hello"), '"SGVsbG8="')
 
     def test_bytes_deserialization(self):
-        self.assertEqual(JsonSerialization.deserialize('"SGVsbG8="', bytes),"Hello".encode("ascii"))
+        self.assertEqual(Serialization.deserialize('"SGVsbG8="', bytes), b"Hello")
 
 
 if __name__ == '__main__':

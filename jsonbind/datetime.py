@@ -1,17 +1,18 @@
 import datetime
-from .serialization import JsonSerialization, JsonTypeMapping
+import typing
+from .type_binding import TypeBinding, JsonTypes, Bindings
 
-class JsonDateMapping(JsonTypeMapping):
-    _json_type = str
-    _mapped_type = datetime.datetime
-    _date_format = '%Y-%m-%d %H:%M:%S.%f'
 
-    @staticmethod
-    def to_mapped_type(c: str, mapped_type: type) -> datetime.datetime:
-        return datetime.datetime.strptime(c, JsonDateMapping._date_format)
+class DateTimeBinding(TypeBinding):
+    def __init__(self, date_format: str):
+        super().__init__(json_type=str, python_type=datetime.datetime)
+        self.date_format = date_format
 
-    @staticmethod
-    def to_json_string(c: datetime.datetime) -> str:
-        return '"%s"' % c.strftime(JsonDateMapping._date_format)
+    def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
+        return python_value.strftime(self.date_format)
 
-JsonSerialization.add_type_mapping(JsonDateMapping)
+    def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
+        return datetime.datetime.strptime(json_value, self.date_format)
+
+
+Bindings.set_binding(DateTimeBinding(date_format='%Y-%m-%d %H:%M:%S.%f'))

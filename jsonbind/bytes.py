@@ -1,17 +1,18 @@
-from .serialization import JsonSerialization, JsonTypeMapping
+import typing
+import base64
+from .type_binding import TypeBinding, JsonTypes, Bindings
 
-class JsonBytesMapping(JsonTypeMapping):
-    _json_type = str
-    _mapped_type = bytes
 
-    @staticmethod
-    def to_mapped_type(c: str, mapped_type: type) -> bytes:
-        import base64
-        return base64.b64decode(c)
+class BytesBinding(TypeBinding):
+    def __init__(self, encoding: str):
+        super().__init__(json_type=str, python_type=bytes)
+        self.encoding = encoding
 
-    @staticmethod
-    def to_json_string(c: bytes) -> str:
-        import base64
-        return '"%s"' % base64.b64encode(c).decode("ascii")
+    def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
+        return base64.b64encode(python_value).decode(self.encoding)
 
-JsonSerialization.add_type_mapping(JsonBytesMapping)
+    def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
+        return base64.b64decode(json_value)
+
+
+Bindings.set_binding(BytesBinding(encoding='ascii'))
