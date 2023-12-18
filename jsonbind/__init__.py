@@ -14,4 +14,4 @@ from .enum import EnumBinding, EnumValueBinding
 from .class_binding import ClassBinding
 from .object import Object
 from .tuple import TupleBinding
-from .list import List
+from .list import List, NotFoundBehavior, SortOrder

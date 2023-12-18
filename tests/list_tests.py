@@ -1,7 +1,7 @@
 import unittest
 import sys
 sys.path.append('..')
-from jsonbind import Serialization, List, Object
+from jsonbind import Serialization, List, Object, NotFoundBehavior, SortOrder
 
 
 class ListTests(unittest.TestCase):
@@ -56,18 +56,37 @@ class ListTests(unittest.TestCase):
         m = l.map(lambda i:Object(nx=i.x + i.y, ny=float(i.x/2)))
         self.assertEqual(m, List(list_type=Object, iterable=[Object(nx=x*3, ny=x/2) for x in range(100)]))
 
-    def test_create_test(self):
+    def test_create_type(self):
         lt = List.create_type(list_type=Object)
         l = lt()
         self.assertRaises(TypeError, l, 1)
         self.assertRaises(TypeError,l, "str")
         self.assertRaises(TypeError, l, None)
-
         lt = List.create_type(list_type=Object, allow_empty=True)
         l = lt()
         self.assertRaises(TypeError, l, 1)
         self.assertRaises(TypeError,l, "str")
         l.append(None)
+
+    def test_search(self):
+        # Basic Test
+        l = List(list_type=Object, iterable=[Object(x=x, y=x * 2) for x in range(100)])
+        self.assertEqual(l.find_first(lambda i: i.x == 10), Object(x=10, y=20))
+        self.assertRaises(RuntimeError, l.find_first, lambda i: False)
+        self.assertEqual(l.find_ordered(10, lambda i: i.x), Object(x=10, y=20))
+        self.assertRaises(RuntimeError, l.find_ordered, -10, lambda i: i.x)
+
+        # Descending Test
+        l = List(list_type=Object, iterable=[Object(x=x, y=x * 2) for x in range(100,0,-1)])
+        self.assertEqual(l.find_first(lambda i: i.x == 10), Object(x=10, y=20))
+        self.assertRaises(RuntimeError, l.find_first, lambda i: False)
+        self.assertEqual(l.find_ordered(10, lambda i: i.x, order=SortOrder.Descending), Object(x=10, y=20))
+        self.assertRaises(RuntimeError, l.find_ordered, -10, lambda i: i.x, order=SortOrder.Descending)
+
+        # NotFoundBehavior
+        l = List(list_type=Object, iterable=[Object(x=x, y=x * 2) for x in range(100)])
+        self.assertEqual(l.find_first(lambda i: False, not_found_behavior=NotFoundBehavior.ReturnNone), None)
+        self.assertEqual(l.find_ordered(-10, lambda i: i.x, not_found_behavior=NotFoundBehavior.ReturnNone), None)
 
 if __name__ == '__main__':
     unittest.main()
