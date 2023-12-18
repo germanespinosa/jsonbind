@@ -1,7 +1,4 @@
 import typing
-
-from json_cpp import JsonList
-
 from .type_binding import TypeBinding, JsonTypes, Bindings
 from .serializable import Serializable
 from .search import bin_search, SearchType, SortOrder, NotFoundBehavior
@@ -28,7 +25,7 @@ class List(list, Serializable):
             list.__iadd__(self, map(self.__type_check__, iterable))
 
     @staticmethod
-    def create_type(list_type=None, list_name: str = "") -> type:
+    def create_type(list_type=None, allow_empty: bool = False, list_name: str = "") -> type:
         """
         Dynamically creates a new JsonList subclass for a specific item type.
 
@@ -41,7 +38,7 @@ class List(list, Serializable):
         """
 
         def __init__(self, iterable=None):
-            List.__init__(self, iterable=iterable, list_type=list_type)
+            List.__init__(self, iterable=iterable, list_type=list_type, allow_empty=allow_empty)
         if not list_name:
             list_name = "%sList" % list_type.__name__
         new_type = type(list_name, (List,), {"__init__": __init__})
@@ -60,8 +57,11 @@ class List(list, Serializable):
         if id(value) == id(self):
             raise ValueError("recursive lists are not allowed")
 
-        if value is None and not self.allow_empty:
-            raise TypeError(f"this list does not allow empty values")
+        if value is None:
+            if not self.allow_empty:
+                raise TypeError(f"this list does not allow empty values")
+            return value
+
 
         if self.list_type:
             if not isinstance(value, self.list_type):

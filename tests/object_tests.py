@@ -56,7 +56,6 @@ class BoundObjectTests(unittest.TestCase):
         from copy import copy, deepcopy
         c = C()
         cc = copy(c)
-        print (c, cc)
         self.assertEqual(c, cc)
         cc.g.x = 50
         self.assertEqual(c, cc)
