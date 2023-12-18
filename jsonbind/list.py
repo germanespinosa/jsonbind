@@ -1,42 +1,13 @@
+import typing
+
 from json_cpp import JsonList
 
-from serializable import JsonSerializable
-from serialization import JsonSerialization
+from .type_binding import TypeBinding, JsonTypes, Bindings
+from .serializable import Serializable
 from .search import bin_search, SearchType, SortOrder, NotFoundBehavior
-import json
-
-class JsonList(list, JsonSerializable):
-    """
-    An enhanced list for JSON-like data handling with type constraints.
-
-    Attributes:
-    - list_type: The allowed type for items in the list.
-    - allow_empty: Flag to allow None values in the list.
-
-    Example:
-        js = JsonList(list_type=int, iterable=[1,2,3])
-        print(js)           # Outputs: [1,2,3]
-        js.append(4)
-        print(js)           # Outputs: [1,2,3,4]
-        js.append(3.4)      # Raises TypeError
-        js.append(None)      # Raises TypeError
 
 
-        js = JsonList(list_type=JsonObject)
-        js.append(JsonObject(x=1, y=2))
-        js.append(JsonObject(x=3, y=4))
-        print(js)           # Outputs: [{"x":1,"y":2},{"x":3,"y":4}]
-        js.append(3.4)      # Raises TypeError
-        js.append(None)      # Raises TypeError
-
-        js = JsonList(list_type=int, iterable=[1,2,3], allow_empty=True)
-        print(js)           # Outputs: [1,2,3]
-        js.append(4)
-        print(js)           # Outputs: [1,2,3,4]
-        js.append(3.4)      # Raises TypeError
-        js.append(None)
-        print(js)           # Outputs: [1,2,3,4,null]
-    """
+class List(list, Serializable):
 
     def __init__(self, list_type=None, iterable=None, allow_empty: bool = False):
         """
@@ -47,15 +18,17 @@ class JsonList(list, JsonSerializable):
         - iterable (iterable, optional): An initial collection of items.
         - allow_empty (bool): Flag to determine if None values are allowed. Default is False.
         """
-        iterable = list() if not iterable else iterable
-        iter(iterable)
-        map(self._typeCheck, iterable)
-        list.__init__(self, iterable)
+        if list_type is not None:
+            if not Bindings.is_bonded(list_type):
+                raise TypeError(f"list type {list_type} is not serializable")
         self.list_type = list_type
         self.allow_empty = allow_empty
+        list.__init__(self)
+        if iterable:
+            list.__iadd__(self, map(self.__type_check__, iterable))
 
     @staticmethod
-    def create_type(list_item_type: type, list_type_name: str = "") -> type:
+    def create_type(list_type=None, list_name: str = "") -> type:
         """
         Dynamically creates a new JsonList subclass for a specific item type.
 
@@ -68,34 +41,13 @@ class JsonList(list, JsonSerializable):
         """
 
         def __init__(self, iterable=None):
-            JsonList.__init__(self, iterable=iterable, list_type=list_item_type)
-        if not list_type_name:
-            list_type_name = "Json_%s_list" % list_item_type.__name__
-        newclass = type(list_type_name, (JsonList,), {"__init__": __init__})
-        return newclass
+            List.__init__(self, iterable=iterable, list_type=list_type)
+        if not list_name:
+            list_name = "%sList" % list_type.__name__
+        new_type = type(list_name, (List,), {"__init__": __init__})
+        return new_type
 
-    def format(self, format_string: str) -> str:
-        """
-        Formats the JsonList using a provided format string.
-
-        Args:
-            format_string (str): The format string containing placeholders that match keys in the JsonList element.
-
-        Returns:
-            str: A formatted string with placeholders replaced by their corresponding values from the JsonList element.
-
-        Note:
-            This method supports nested formatting for nested JsonList.
-        """
-        formatted_string = ""
-        for k in self:
-            if isinstance(k, JsonSerializable):
-                formatted_string += k.format(format_string=format_string)
-            else:
-                formatted_string += format_string.format(k)
-        return formatted_string
-
-    def _typeCheck(self, val):
+    def __type_check__(self, value) -> typing.Any:
         """
         Internal method to check if a value matches the list's predefined type or valid JSON types.
 
@@ -105,18 +57,19 @@ class JsonList(list, JsonSerializable):
         Raises:
         ValueError: If the value does not match the allowed types.
         """
-        if val is None and self.allow_empty:
-            return
+        if value is None and not self.allow_empty:
+            raise TypeError(f"this list does not allow empty values")
+
         if self.list_type:
-            if self.list_type is float and type(val) is int: #json ints can also be floats
-                val = float(val)
-            if not isinstance(val, self.list_type):
-                raise TypeError("Wrong type %s, this list can hold only instances of %s" % (val.__class__.__name,
-                                                                                            self.list_type.__name__))
+            if not isinstance(value, self.list_type):
+                if self.list_type is float and type(value) is int:  # json ints can also be floats
+                    value = float(value)
+                else:
+                    raise TypeError(f"this list only allows values of type {self.list_type.__name__}")
         else:
-            if not JsonSerialization.is_valid(val):
-                raise TypeError("Wrong type %s, this list can hold only %s" % (val.__class__.__name__,
-                                                                               JsonSerialization.valid_types_str()))
+            if not Bindings.is_bonded(python_type=value.__class__):
+                raise TypeError(f"value of type {value.__class__} is not serializable")
+        return value
 
     def __iadd__(self, other):
         """
@@ -128,8 +81,7 @@ class JsonList(list, JsonSerializable):
         Raises:
             TypeError: If the provided value is not of the list type.
         """
-        map(self._typeCheck, other)
-        list.__iadd__(self, other)
+        list.__iadd__(self, map(self.__type_check__, other))
         return self
 
     def __add__(self, other):
@@ -145,8 +97,9 @@ class JsonList(list, JsonSerializable):
         Returns:
             A new list with the iterable concatenated to the current list
         """
-        iterable = [item for item in self] + [item for item in other]
-        return JsonList(list_type=self.list_type, iterable=iterable)
+        new_list = List(list_type=self.list_type, iterable=self)
+        new_list.__iadd__(other)
+        return new_list
 
     def __radd__(self, other):
         """
@@ -161,10 +114,9 @@ class JsonList(list, JsonSerializable):
         Returns:
             A new list with the current list concatenated to the iterable
         """
-        iterable = [item for item in other] + [item for item in self]
-        if isinstance(other, JsonList):
-            return self.__class__(list_type=other.list_type, iterable=iterable)
-        return JsonList(list_type=self.list_type, iterable=iterable)
+        new_list = List(list_type=self.list_type, iterable=other)
+        new_list.__iadd__(self)
+        return new_list
 
     def __setitem__(self, index, value):
         """
@@ -177,41 +129,23 @@ class JsonList(list, JsonSerializable):
         Raises:
             TypeError: If the value type is not the same as the list type.
         """
-        itervalue = (value,)
         if isinstance(index, slice):
-            iter(value)
-            itervalue = value
-        map(self._typeCheck, itervalue)
+            value = map(self.__type_check__, value)
+        else:
+            value = self.__type_check__(value)
         list.__setitem__(self, index, value)
 
-    def __setslice__(self, i, j, iterable):
-        """
-        Set a slice of the list to a given iterable after type checking.
-
-        Args:
-            i (int): The starting index of the slice.
-            j (int): The ending index of the slice.
-            iterable (iterable): The iterable whose values are to be set in the slice.
-
-        Raises:
-            TypeError: If the iterable contains values not of the list type.
-        """
-        iter(iterable)
-        map(self._typeCheck, iterable)
-        list.__setslice__(self, i, j, iterable)
-
-    def append(self, val):
+    def append(self, value):
         """
         Append a value to the list after type checking.
 
         Args:
-            val (any): The value to be appended to the list.
+            value (any): The value to be appended to the list.
 
         Raises:
             TypeError: If the provided value is not of the list type.
         """
-        self._typeCheck(val)
-        list.append(self, val)
+        list.append(self, self.__type_check__(value))
 
     def extend(self, iterable):
         """
@@ -223,59 +157,22 @@ class JsonList(list, JsonSerializable):
         Raises:
             TypeError: If the iterable contains values not of the list type.
         """
-        iter(iterable)
-        map(self._typeCheck, iterable)
-        list.extend(self, iterable)
+        list.extend(self, self.__type_check__(iterable))
 
-    def insert(self, i, val):
+    def insert(self, i, value):
         """
         Insert a value at a specified index in the list after type checking.
 
         Args:
             i (int): The index where the value is to be inserted.
-            val (any): The value to be inserted into the list.
+            value (any): The value to be inserted into the list.
 
         Raises:
             TypeError: If the provided value is not of the list type.
         """
-        self._typeCheck(val)
-        list.insert(self, i, val)
+        list.insert(self, i, self.__type_check__(value))
 
-    def __str__(self):
-        """
-        Provide a string representation of the list.
-
-        Returns:
-        str: A JSON-formatted string representation of the list.
-        """
-        return "[" + ",".join([JsonSerialization.serialize(x) for x in self]) + "]"
-
-    def __repr__(self):
-        """
-        Official string representation of the object, used for debugging and development.
-
-        Returns:
-        str: A JSON-formatted string representation of the list.
-        """
-        return str(self)
-
-    def get(self, m):
-        """
-        Get values associated with the specified attribute for items in the list.
-
-        Parameters:
-        - m (str): The attribute name.
-
-        Returns:
-        JsonList: A new list containing the values associated with the specified attribute.
-        """
-        l = JsonList()
-        for i in self:
-            if m in vars(i):
-                l.append(vars(i)[m])
-        return l
-
-    def split_by(self, m) -> dict:
+    def split_by(self, m: typing.Callable) -> dict:
         """
         Split the list into multiple lists based on the value of a specified attribute or a calculated field.
 
@@ -284,16 +181,16 @@ class JsonList(list, JsonSerializable):
         Returns:
         dict: A dictionary where keys are unique attribute or calculated field values and values are lists of items.
         """
-        r = {}
-        for i in self:
-            l = m(i)
-            if l not in r:
-                r[l] = self.__class__()
+        result = {}
+        for item in self:
+            computed_field = m(item)
+            if computed_field not in result:
+                result[computed_field] = self.__class__()
                 self.list_type = self.list_type
-            r[l].append(i)
-        return r
+            result[computed_field].append(item)
+        return result
 
-    def filter(self, key):
+    def filter(self, key: typing.Any) -> "List":
         """
         Filter the list based on a given function.
 
@@ -303,11 +200,12 @@ class JsonList(list, JsonSerializable):
         Returns:
         JsonList: A new list containing items for which the function returned True.
         """
-        nl = self.__class__()
-        for i in self:
-            if key(i):
-                nl.append(i)
-        return nl
+        filtered_list = self.__class__()
+        filtered_list.list_type = self.list_type
+        for item in self:
+            if key(item):
+                filtered_list.append(item)
+        return filtered_list
 
     def find_first(self, key, not_found_behavior=NotFoundBehavior.RaiseError):
         """
@@ -320,8 +218,8 @@ class JsonList(list, JsonSerializable):
         Returns:
         Any: The first item that meets the condition or a behavior based on the NotFoundBehavior.
         """
-        i = self.find_first_index(key, not_found_behavior=not_found_behavior)
-        return None if i is None else JsonList.__getitem__(self, i)
+        index = self.find_first_index(key, not_found_behavior=not_found_behavior)
+        return None if index is None else List.__getitem__(self, index)
 
     def find_first_index(self, key, not_found_behavior=NotFoundBehavior.RaiseError):
         """
@@ -368,7 +266,7 @@ class JsonList(list, JsonSerializable):
         Any: The found item or a behavior based on the NotFoundBehavior.
         """
         i = bin_search(self, value, key=key, search_type=search_type, order=order, not_found_behavior=not_found_behavior)
-        return None if i is None else JsonList.__getitem__(self, i)
+        return None if i is None else List.__getitem__(self, i)
 
     def find_ordered_index(self,
                            value,
@@ -396,233 +294,44 @@ class JsonList(list, JsonSerializable):
                           order=order,
                           not_found_behavior=not_found_behavior)
 
-    def process(self, l):
+    def map(self, process: typing.Callable) -> "List":
         """
         Processes each element in the list using a provided function.
 
         Args:
-            l (callable): A function to be applied to each item in the list.
+            process (callable): A function to be applied to each item in the list.
 
         Returns:
-            JsonList: A new JsonList with items after being processed by the function `l`.
+            List: A new List with items after being processed by the function `l`.
         """
-        nl = JsonList()
-        for i in self:
-            nl.append(l(i))
-        return nl
+        new_list = List()
+        for item in self:
+            new_list.append(process(item))
+        return new_list
 
-    def copy(self):
-        """
-        Creates a deep copy of the current JsonList.
+    def __copy__(self) -> "List":
+        return List(list_type=self.list_type, iterable=self)
 
-        Returns:
-            JsonList: A new JsonList that is a deep copy of the current list.
-        """
-        return self.__class__.parse(str(self))
-
-    def get_values(self):
-        """
-        Retrieves the values from the list. If an item is an instance of JsonObject or JsonList,
-        recursively gets the values from the object or list.
-
-        Returns:
-            JsonList: A new JsonList containing the values from the original list.
-        """
-        values = JsonList(list_type=JsonList)
-        for i in self:
-            if isinstance(i, JsonSerializable):
-                values.append(i.get_values())
-            else:
-                values.append(i)
-        return values
-
-    def set_values(self, values: list):
-        """
-        Sets the values in the current JsonList based on the provided values list.
-
-        Args:
-            values (list): The list of values to be set in the current JsonList.
-        """
-        for i in values:
-            if issubclass(self.list_type, JsonSerializable):
-                ni = self.list_type()
-                ni.set_values(i)
-                self.append(ni)
-            else:
-                self.append(i)
-
-    def load(self, json_string: str) -> "JsonList":
-        """
-        Parses a JSON string or list into a JsonList. The type of items in the resulting JsonList
-        is determined based on the list_type attribute of the JsonList.
-
-        Args:
-            json_string (str, optional): A JSON-formatted string to be parsed into a JsonList.
-            json_list (list, optional): A list to be converted into a JsonList.
-
-        Returns:
-            JsonList: A new or updated JsonList populated with items from the provided JSON string or list.
-
-        Raises:
-            TypeError: If provided json_string is not a string or json_list is not a list.
-        """
-        parsed_list = json.loads(json_string)
-        return self.__load_parsed_list__(parsed_list=parsed_list)
-
-    def __load_parsed_list__(self, parsed_list: list) -> "JsonList":
-        self.clear()
-        it = self.list_type
-        for i in parsed_list:
-            if self.list_type:
-                self.append(JsonSerialization.deserialize(i, it))
-            else:
-                if isinstance(i, list):
-                    self.append(JsonList().__load_parsed_list__(parsed_list=i))
-                elif isinstance(i, "JsonObject"):
-                    from .object import JsonObject
-                    self.append(i, JsonObject.__load_parsed_dict__(parsed_dict=i))
-                elif JsonSerialization.is_valid(i):
-                    self.append(i)
-                else:
-                    raise TypeError("Type %s is not serializable." % i.__class__.__name__)
-        return self
-
-    def save(self, file_path: str):
-        """
-        Save the list to a file in JSON format.
-
-        Parameters:
-        - file_path (str): The path to the file where the list will be saved.
-        """
-        with open(file_path, 'w') as f:
-            f.write(str(self))
-
-    def load_from_file(self, file_path: str):
-        """
-        Load the list from a file containing JSON data.
-
-        Parameters:
-        - file_path (str): The path to the file to load data from.
-        """
-        import os
-        if not os.path.exists(file_path):
-            return None
-        json_content = ""
-        with open(file_path) as f:
-            json_content = f.read()
-        return self.parse(json_content)
-
-    def load_from_url(self, uri: str):
-        """
-        Load JSON data into the list from a URL.
-
-        Parameters:
-        - uri (str): The URL to fetch the data from.
-        """
-        import requests
-        req = requests.get(uri)
-        if req.status_code == 200:
-            return self.parse(req.text)
-        return None
-
-    def to_numpy_array(self):
-        """
-        Convert the list to a numpy array.
-
-        Returns:
-        numpy.array: The numpy array representation of the list.
-
-        Notes:
-        Only supports conversion if the list contains simple types (int, float, bool) or JsonObject instances.
-        """
-        from numpy import array
-        from .object import JsonObject
-        if self.list_type is int or self.list_type is float or self.list_type is bool:
-            return array(self)
-        return array([i.get_values() for i in self if isinstance(i, JsonObject)])
-
-    def from_numpy_array(self, a):
-        """
-        Populate the list from a numpy array.
-
-        Parameters:
-        - a (numpy.array): The array to load data from.
-
-        Notes:
-        Only supports loading from an array if the list's type is a JsonObject or a simple type.
-        """
-        self.clear()
-        columns = self.list_type().get_columns()
-        for row in a:
-            ni = self.list_type()
-            for i, c in enumerate(columns):
-                ni[c] = row[i]
-            self.append(ni)
-
-    def to_dataframe(self, recursive: bool = False):
-        """
-        Convert the list to a pandas DataFrame.
-
-        Parameters:
-        - recursive (bool): Flag to indicate if nested objects should be recursively converted to DataFrame columns.
-
-        Returns:
-        pandas.DataFrame: The DataFrame representation of the list.
-        """
-        from pandas import DataFrame
-        from .object import JsonObject
-        if self.list_type is JsonObject or self.list_type is None:
-            if len(self) == 0:
-                return DataFrame()
-            if isinstance(self[0], JsonObject):
-                columns = self[0].get_columns()
-            else:
-                raise RuntimeError("Item type cannot be loaded to dataframe")
-        else:
-            if issubclass(self.list_type, JsonObject):
-                columns = self.list_type().get_columns()
-            else:
-                return DataFrame(self)
-
-        if recursive:
-            return DataFrame([i.__dataframe_values__() for i in self], columns=columns)
-        else:
-            return DataFrame([i.get_values() for i in self], columns=columns)
-
-    def from_dataframe(self, df):
-        """
-        Populate the list from a pandas DataFrame.
-
-        Parameters:
-        - df (pandas.DataFrame): The DataFrame to load data from.
-        """
-        self.clear()
-        columns = df.columns
-        for i, row in df.iterrows():
-            ni = self.list_type()
-            for c in columns:
-                ni[c] = row[c]
-            self.append(ni)
-
-    def into(self, cls: type):
-        """
-        Convert the current list into another type derived from JsonList.
-
-        Parameters:
-        - cls (type): The target JsonList derived type to convert into.
-
-        Returns:
-        JsonList: A new JsonList of the specified type with the current list's data.
-
-        Raises:
-        RuntimeError: If the provided type is not derived from JsonList.
-        """
-        if not issubclass(cls, JsonList):
-            raise RuntimeError("type must derive from JsonList")
-        nv = cls.parse(str(self))
-        return nv
+    def __deepcopy__(self, memo: dict = None) -> "List":
+        from copy import deepcopy
+        return List(list_type=self.list_type, iterable=map(deepcopy, self))
 
 
-JsonSerialization.add_type(list,
-                           lambda l: str(JsonList(iterable=l)),
-                           lambda i, t: t.__load_from_parsed_values__(parsed_values=i))
+class ListBinding(TypeBinding):
+    def __init__(self):
+        super().__init__(json_type=list, python_type=List)
+
+    def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
+        json_value = self.json_type(map(Bindings.to_json_value, python_value))
+        return json_value
+
+    def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
+        python_value: List = python_type()
+        for item in json_value:
+            python_value.append(Bindings.to_python_value(json_value=item, python_type=python_value.list_type))
+        return python_value
+
+
+Bindings.set_binding(ListBinding())
+
+

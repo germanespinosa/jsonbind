@@ -1,3 +1,40 @@
+from .serialization import Serialization
+
+
+class Serializable(object):
+    def __str__(self) -> str:
+        """
+        Returns a string representation of the JsonObject in JSON format.
+
+        Returns:
+            str: JSON-formatted string.
+        """
+        return Serialization.serialize(self)
+
+    @classmethod
+    def parse(cls, json_string: str) -> "Serializable":
+        return Serialization.deserialize(json_string=json_string, python_type=cls)
+
+    @classmethod
+    def parse_from_file(cls, file_path: str) -> "Serializable":
+        import os
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError("file does not exist")
+        with open(file_path, "r") as f:
+            json_string = f.read()
+        return cls.parse(json_string=json_string)
+
+    @classmethod
+    def parse_from_url(cls, url: str) -> "Serializable":
+        import requests
+        response = requests.get(url)
+        if response.status_code != 200:
+            raise requests.exceptions
+        json_string = response.text
+        return cls.parse(json_string=json_string)
+
+
+
 # import typing
 #
 # from .serialization import JsonSerialization

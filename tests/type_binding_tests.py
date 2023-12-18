@@ -43,6 +43,8 @@ class TypeBindingTests(unittest.TestCase):
         self.assertRaises(TypeError, b.__convert_to_python_type__, 10, int)
 
 
+
+
 class BindingManagerTests(unittest.TestCase):
     def test_get_bond(self):
         bond = Bindings.get_binding(str)
@@ -53,7 +55,9 @@ class BindingManagerTests(unittest.TestCase):
         self.assertEqual(bond.to_json_value("Hello"), "Hello")
         self.assertEqual(bond.to_json_value([1, 2, 3]), [1, 2, 3])
         self.assertEqual(bond.to_json_value({"a": 1, "b": 2}), {"a": 1, "b": 2})
-        self.assertRaises(TypeError, Bindings.get_binding, tuple)
+        class Test(object):
+            pass
+        self.assertRaises(TypeError, Bindings.get_binding, Test)
 
 
 if __name__ == '__main__':
