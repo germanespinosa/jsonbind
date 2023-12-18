@@ -52,6 +52,20 @@ class BoundObjectTests(unittest.TestCase):
         ti2 = ti0.convert_to(C)
         self.assertEqual(ti0, ti2)
 
+    def test_copy(self):
+        from copy import copy, deepcopy
+        c = C()
+        cc = copy(c)
+        print (c, cc)
+        self.assertEqual(c, cc)
+        cc.g.x = 50
+        self.assertEqual(c, cc)
+        cdc = deepcopy(c)
+        self.assertEqual(c, cc)
+        cdc.g.x = 80
+        self.assertEqual(c, cc)
+
+
 
 if __name__ == '__main__':
     unittest.main()

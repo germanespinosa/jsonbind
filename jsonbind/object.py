@@ -18,12 +18,6 @@ class Object(Serializable):
                 return False
         return True
 
-    def __copy__(self) -> "Object":
-        copy = self.__class__()
-        for key, value in self.__dict__.items():
-            copy.__dict__[key] = value
-        return copy
-
     def get_members(self) -> typing.List[typing.Tuple[str, typing.Any]]:
         """
         Retrieve all member variables of the JsonObject that don't start with an underscore.
@@ -189,6 +183,19 @@ class Object(Serializable):
                 raise KeyError("key '{}' not found".format(child_key))
         else:
             setattr(self, key, value)
+
+    def __copy__(self) -> "Object":
+        new_object = self.__class__()
+        new_object.__dict__.update(self.__dict__)
+        return new_object
+
+    def __deepcopy__(self, memo: dict = None) -> "List":
+        from copy import deepcopy
+        new_object = self.__class__()
+        memo[id(self)] = new_object
+        for key, value in self.__dict__.items():
+            new_object.__dict__[key] = deepcopy(value, memo=memo)
+        return new_object
 
 
 class ObjectBinding(TypeBinding):

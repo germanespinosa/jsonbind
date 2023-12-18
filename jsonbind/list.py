@@ -57,6 +57,9 @@ class List(list, Serializable):
         Raises:
         ValueError: If the value does not match the allowed types.
         """
+        if id(value) == id(self):
+            raise ValueError("recursive lists are not allowed")
+
         if value is None and not self.allow_empty:
             raise TypeError(f"this list does not allow empty values")
 
@@ -314,7 +317,17 @@ class List(list, Serializable):
 
     def __deepcopy__(self, memo: dict = None) -> "List":
         from copy import deepcopy
-        return List(list_type=self.list_type, iterable=map(deepcopy, self))
+        new_list = self.__class__()
+        List.__init__(new_list, list_type=self.list_type)
+        memo[id(self)] = new_list
+        new_list.__iadd__(map(lambda m: deepcopy(m, memo=memo), self))
+        return new_list
+
+    def copy(self) -> "List":
+        return List.__copy__(self=self)
+
+    def deepcopy(self) -> "List":
+        return List.__deepcopy__(self=self)
 
 
 class ListBinding(TypeBinding):
