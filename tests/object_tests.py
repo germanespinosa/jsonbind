@@ -41,7 +41,8 @@ class BoundObjectTests(unittest.TestCase):
         ti["g.x"] = 50
         self.assertEqual(ti["g.x"], 50)
         self.assertRaises(KeyError, ti.__getitem__, "z.x")
-        self.assertRaises(KeyError, ti.__setitem__, "z.x", "10")
+        ti["z.x"] = 10
+        self.assertEqual(ti["z.x"], 10)
 
     def test_get_members(self):
         ti0 = B()

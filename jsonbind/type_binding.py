@@ -93,8 +93,8 @@ class Bindings(object):
 
 
 class BaseBinding(TypeBinding):
-    def __init__(self, json_type: type, python_type: type):
-        super().__init__(json_type=json_type, python_type=python_type)
+    def __init__(self, base_type: type):
+        super().__init__(json_type=base_type, python_type=base_type)
 
     def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
         return python_value
@@ -105,7 +105,7 @@ class BaseBinding(TypeBinding):
 
 class ListBinding(BaseBinding):
     def __init__(self):
-        super().__init__(json_type=list, python_type=list)
+        super().__init__(base_type=list)
 
     def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
         from .serialization import Bindings
@@ -120,7 +120,7 @@ class ListBinding(BaseBinding):
 
 class DictBinding(BaseBinding):
     def __init__(self):
-        super().__init__(json_type=dict, python_type=dict)
+        super().__init__(base_type=dict)
 
     def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
         from .serialization import Bindings
@@ -133,10 +133,10 @@ class DictBinding(BaseBinding):
         return json_value
 
 
-Bindings.set_binding(BaseBinding(python_type=types.NoneType, json_type=types.NoneType))
-Bindings.set_binding(BaseBinding(python_type=bool, json_type=bool))
-Bindings.set_binding(BaseBinding(python_type=int, json_type=int))
-Bindings.set_binding(BaseBinding(python_type=float, json_type=float))
-Bindings.set_binding(BaseBinding(python_type=str, json_type=str))
+Bindings.set_binding(BaseBinding(base_type=types.NoneType))
+Bindings.set_binding(BaseBinding(base_type=bool))
+Bindings.set_binding(BaseBinding(base_type=int))
+Bindings.set_binding(BaseBinding(base_type=float))
+Bindings.set_binding(BaseBinding(base_type=str))
 Bindings.set_binding(ListBinding())
 Bindings.set_binding(DictBinding())

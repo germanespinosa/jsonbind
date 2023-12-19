@@ -36,8 +36,25 @@ class PandasAddonTests(unittest.TestCase):
                                                              y=i+40,
                                                              z=Object(i=i+50,
                                                                       j=i+60))) for i in range(100)])
+        data_frame = l.to_data_frame()
+
+        for i, row in data_frame.iterrows():
+            o = l[i]
+            values = o.get_values()
+            for column_name, value_name in values:
+                self.assertEqual(o[column_name],row[column_name].item())
+
+    def test_pandas_from_data_series(self):
+        l = List(list_type=Object, iterable=[Object(a=i,
+                                                    b=i+10,
+                                                    c=i+20,
+                                                    d=Object(x=i+30,
+                                                             y=i+40,
+                                                             z=Object(i=i+50,
+                                                                      j=i+60))) for i in range(100)])
         df = l.to_data_frame()
-        print(df)
+        l2 = List.create_type(list_type=Object).from_data_frame(df)
+        self.assertEqual(l2,l)
 
 
 if __name__ == '__main__':

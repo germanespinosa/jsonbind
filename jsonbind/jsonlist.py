@@ -525,21 +525,6 @@
 #             return self.parse(req.text)
 #         return None
 #
-#     def to_numpy_array(self):
-#         """
-#         Convert the list to a numpy array.
-#
-#         Returns:
-#         numpy.array: The numpy array representation of the list.
-#
-#         Notes:
-#         Only supports conversion if the list contains simple types (int, float, bool) or JsonObject instances.
-#         """
-#         from numpy import array
-#         from .object import JsonObject
-#         if self.list_type is int or self.list_type is float or self.list_type is bool:
-#             return array(self)
-#         return array([i.get_values() for i in self if isinstance(i, JsonObject)])
 #
 #     def from_numpy_array(self, a):
 #         """
@@ -557,51 +542,6 @@
 #             ni = self.list_type()
 #             for i, c in enumerate(columns):
 #                 ni[c] = row[i]
-#             self.append(ni)
-#
-#     def to_dataframe(self, recursive: bool = False):
-#         """
-#         Convert the list to a pandas DataFrame.
-#
-#         Parameters:
-#         - recursive (bool): Flag to indicate if nested objects should be recursively converted to DataFrame columns.
-#
-#         Returns:
-#         pandas.DataFrame: The DataFrame representation of the list.
-#         """
-#         from pandas import DataFrame
-#         from .object import JsonObject
-#         if self.list_type is JsonObject or self.list_type is None:
-#             if len(self) == 0:
-#                 return DataFrame()
-#             if isinstance(self[0], JsonObject):
-#                 columns = self[0].get_columns()
-#             else:
-#                 raise RuntimeError("Item type cannot be loaded to dataframe")
-#         else:
-#             if issubclass(self.list_type, JsonObject):
-#                 columns = self.list_type().get_columns()
-#             else:
-#                 return DataFrame(self)
-#
-#         if recursive:
-#             return DataFrame([i.__dataframe_values__() for i in self], columns=columns)
-#         else:
-#             return DataFrame([i.get_values() for i in self], columns=columns)
-#
-#     def from_dataframe(self, df):
-#         """
-#         Populate the list from a pandas DataFrame.
-#
-#         Parameters:
-#         - df (pandas.DataFrame): The DataFrame to load data from.
-#         """
-#         self.clear()
-#         columns = df.columns
-#         for i, row in df.iterrows():
-#             ni = self.list_type()
-#             for c in columns:
-#                 ni[c] = row[c]
 #             self.append(ni)
 #
 #     def into(self, cls: type):

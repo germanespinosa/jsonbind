@@ -173,7 +173,8 @@ class Object(Serializable):
             child_key = key[pos+1:]
             key = key[:pos]
             if key not in self.__dict__:
-                raise KeyError("key '{}' not found".format(key))
+                self.__dict__[key] = Object()
+
             child = self.__dict__[key]
             if isinstance(child, Object):
                 return Object.__setitem__(self=child,
@@ -182,6 +183,11 @@ class Object(Serializable):
             else:
                 raise KeyError("key '{}' not found".format(child_key))
         else:
+            if hasattr(self, key):
+                if not isinstance(value,self.__dict__[key].__class__):
+                    value = self.__dict__[key].__class__(value)
+            else:
+                Bindings.get_binding(value.__class__)
             setattr(self, key, value)
 
     def __copy__(self) -> "Object":
