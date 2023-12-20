@@ -9,7 +9,6 @@ def load(fp):
     return loads(json_string)
 
 def dumps(obj,
-          *,
           skipkeys=False,
           ensure_ascii=True,
           check_circular=True,
@@ -21,7 +20,7 @@ def dumps(obj,
           sort_keys=False,
           **kw):
     return Serialization.serialize(python_value=obj,
-                                   python_type=cls,
+                                   cls=cls,
                                    skipkeys=skipkeys,
                                    ensure_ascii = ensure_ascii,
                                    check_circular = check_circular,
@@ -35,7 +34,6 @@ def dumps(obj,
 
 def dump(obj,
          fp,
-         *,
          skipkeys=False,
          ensure_ascii=True,
          check_circular=True,

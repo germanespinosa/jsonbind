@@ -7,13 +7,13 @@ class Serialization:
     __default_bonds__: typing.Dict[type, type] = {python_type: python_type for python_type in JsonTypes}
 
     @staticmethod
-    def serialize(value: typing.Any, **kwargs) -> str:
+    def serialize(python_value: typing.Any, **kwargs) -> str:
         if "separators" not in kwargs:
             kwargs["separators"] = (',', ':')
-        value_type = value.__class__
+        value_type = python_value.__class__
         bond = Bindings.get_binding(value_type)
         if bond:
-            return json.dumps(bond.to_json_value(python_value=value), **kwargs)
+            return json.dumps(bond.to_json_value(python_value=python_value), **kwargs)
         raise TypeError("value type '%s' is not serializable" % value_type.__name__)
 
     @staticmethod

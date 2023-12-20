@@ -1,5 +1,125 @@
-#JsonBind
-A better json library.
+# JsonBind
+
+JsonBind is an advanced JSON handling library for Python, designed to enhance the capabilities of the standard json 
+module. It offers seamless serialization and deserialization of Python data types not typically supported by the default 
+JSON library, including datetime.datetime, tuples, sets, enumerations (enum), bytes, and custom classes.
+
+## The Python JSON standard library
+
+The standard JSON library in Python expertly facilitates the serialization and deserialization of JSON data types into 
+native Python data types, as detailed in the following table:
+
+| JSON Data Type | Python Data Type |
+|----------------|------------------|
+| object         | dict             |
+| array          | list             |
+| string         | str              |
+| number         | int, float       |
+| bool           | bool             |
+| null           | None             |
+
+This compatibility with JSON significantly enhances its utility for data sharing, communication, and storage purposes. 
+However, it is important to recognize that the JSON format's inherent limitations in representing more complex data 
+structures can sometimes restrict its applicability. Crafting specific encoders and decoders to address these 
+limitations often presents a substantial technical challenge, requiring thoughtful consideration and expertise.
+
+## Type-bindings
+
+JsonBind operates on the principle of utilizing type bindings to facilitate the transformation between JSON types and 
+Python types. It comes equipped with an extensive array of pre-defined bindings for commonly used types, including 
+tuples, sets, datetime objects, bytes, classes, and more. Additionally, JsonBind is designed to simplify the process 
+of creating new bindings. This flexibility allows users to seamlessly integrate JSON types with novel Python data types, 
+enhancing the library's adaptability and ease of use in various programming scenarios.
+
+The out-of-the-box bindings provided are:
+
+| JSON Data Type | Python Data Type                            |
+|----------------|---------------------------------------------|
+| object         | dict, <span style="color:blue">class</span> |
+| array          | list, <span style="color:blue">tuple</span>, <span style="color:blue">set</span>|
+| string         | str, <span style="color:blue">datetime</span>, <span style="color:blue">bytes</span>, <span style="color:blue">enum</span>                  |
+| number         | int, float, <span style="color:blue">enum</span>                            |
+| bool           | bool                                        |
+| null           | None                                        |
+
+
+## Side by side
+
+<table>
+<tr>
+<th> Standard Library </th>
+<th> JsonBind </th>
+</tr>
+<tr>
+<td>
+Serializing a datetime to JSON is not possible by default:
+
+``` python
+import json 
+import datetime
+mydate = datetime.datetime.now().date()
+mydate = json.dumps(mydate)
+
+```
+output
+```
+TypeError: Object of type date is not JSON serializable
+```
+
+To do it,  it is necessary to create an  Encoder: 
+
+```python
+import json 
+import datetime
+
+class DateTimeEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+            return obj.isoformat()
+        elif isinstance(obj, datetime.timedelta):
+            return (datetime.datetime.min + obj).time().isoformat()
+
+        return super(DateTimeEncoder, self).default(obj)
+
+mydate = datetime.datetime.now().date()
+encoder = DateTimeEncoder()
+encoder.encode(mydate)
+```
+Output:
+```
+"2023-12-19"
+```
+
+However, this only works converting from python to json.
+To read values from json to python it is necessary to write an additional Decoder class.
+</td>
+<td>
+By default datetime values are fully supported by JsonBind:
+
+```
+import jsonbind as jb 
+import datetime
+mydate = datetime.datetime.now().date()
+mydate = jb.dumps(mydate)
+print(mydate)
+mynewdate = jb.loads('"2023-12-20"', cls=datetime)
+print(mynewdate)
+```
+Output:
+```
+"2023-12-19"
+"2023-12-20"
+```
+</td>
+</tr>
+</table>
+
+## Features
+- Compatibility: Functions prototypes designed to match the standard json library.
+- Extended Data Type Support: Handle complex Python data types effortlessly.
+- Custom Class Serialization: Easily serialize and deserialize your custom classes.
+- Intuitive API: Designed to be familiar to users of the standard json module.
 
 ## Installation
 ```
@@ -7,9 +127,117 @@ pip install jsonbind
 
 ```
 
+## Standard Json load and dump functions
+
+### Loading a json string to its default python type
+
+```python
+import jsonbind as jb
+mydict = jb.loads('{"name":"German Espinosa","age":41,"weight":190.0}')
+print(mydict, type(mydict))
+mylist = jb.loads('[1, 2, 3, 4]')
+print(mylist, type(mylist))
+myint = jb.loads('1')
+print(myint, type(myint))
+myfloat = jb.loads('10.5')
+print(myfloat, type(myfloat))
+mystring = jb.loads('"Hello World"')
+print(mystring, type(mystring))
+mybool = jb.loads('true')
+print(mybool, type(mybool))
+```
+output
+```
+{'name': 'German Espinosa', 'age': 41, 'weight': 190.0} <class 'dict'>
+[1, 2, 3, 4] <class 'list'>
+1 <class 'int'>
+10.5 <class 'float'>
+Hello World <class 'str'>
+True <class 'bool'>
+```
+
+### Serializing a json string from its default python type
+
+```python
+import jsonbind as jb
+mydict = {"name":"German Espinosa","age":41,"weight":190.0}
+print(jb.dumps(mydict), type(mydict))
+mylist = [1, 2, 3, 4]
+print(jb.dumps(mylist), type(mylist))
+myint = 1
+print(jb.dumps(myint), type(myint))
+myfloat = 10.5
+print(jb.dumps(myfloat), type(myfloat))
+mystring = "Hello World"
+print(jb.dumps(mystring), type(mystring))
+mybool = True
+print(jb.dumps(mybool), type(mybool))
+```
+output
+```
+{'name': 'German Espinosa', 'age': 41, 'weight': 190.0} <class 'dict'>
+[1, 2, 3, 4] <class 'list'>
+1 <class 'int'>
+10.5 <class 'float'>
+Hello World <class 'str'>
+True <class 'bool'>
+```
+
+### Loading a json string to a non-default python type
+
+```python
+import jsonbind as jb
+mytuple = jb.loads('[1, 2, 3, 4]', cls=tuple)
+print(mytuple, type(mytuple))
+myset = jb.loads('[1, 2, 3, 4]', cls=set)
+print(myset, type(myset))
+mybytes=jb.loads('"SGVsbG8gV29ybGQ="', cls=bytes)
+print (mybytes, type(mybytes))
+import datetime
+mydate = jb.loads('"2023-12-19"', cls=datetime.datetime)
+print(mydate, type(mydate))
+```
+output
+```
+(1, 2, 3, 4) <class 'tuple'>
+{1, 2, 3, 4} <class 'set'>
+b'Hello World' <class 'bytes'>
+2023-12-19 00:00:00 <class 'datetime.datetime'>
+```
+
+
+### Serializing a json string from a non-default python type
+
+```python
+import jsonbind as jb
+mydict = {"name":"German Espinosa","age":41,"weight":190.0}
+print(jb.dumps(mydict), type(mydict))
+mylist = [1, 2, 3, 4]
+print(jb.dumps(mylist), type(mylist))
+myint = 1
+print(jb.dumps(myint), type(myint))
+myfloat = 10.5
+print(jb.dumps(myfloat), type(myfloat))
+mystring = "Hello World"
+print(jb.dumps(mystring), type(mystring))
+mybool = True
+print(jb.dumps(mybool), type(mybool))
+```
+output
+```
+{'name': 'German Espinosa', 'age': 41, 'weight': 190.0} <class 'dict'>
+[1, 2, 3, 4] <class 'list'>
+1 <class 'int'>
+10.5 <class 'float'>
+Hello World <class 'str'>
+True <class 'bool'>
+```
+
+
+
 ## Create your first json object:
 After installing the package, try the following python script:
-```
+```python 
 import jsonbind as jb
 myobject = jb.Object(name="German Espinosa", age=41, weight=190.0)
 print("name:", myobject.name, type(myobject.name).__name__)
@@ -26,7 +254,7 @@ weight: 190.0 float
 ```
 ### Loading json_data:
 To quickly load json data into objects, use the load command:
-```
+```python
 import jsonbind as jb
 myobject = jb.Object.load("{\"name\":\"German Espinosa\",\"age\":41,\"weight\":190.0}")
 
@@ -43,7 +271,7 @@ weight: 190.0 float
 ```
 ### Formatting outputs:
 You can easily format data, even in complex json hierarchical structures:
-```
+```python
 import jsonbind as jb
 myobject = jb.Object.parse("{\"name\":\"German Espinosa\",\"age\":41,\"weight\":190.0,\"place_of_birth\":{\"country\":\"Argentina\",\"city\":\"Buenos Aires\"}}")
 
@@ -57,7 +285,7 @@ German Espinosa was born in Buenos Aires, Argentina
 ### Working with pre-structured data:
 A powerful way to read and write json is to pre-define the structure of the data. This creates standarized data samples that are easire to be consumed by other tools.
 To pre-define structure of a json object, you need to create your own custom class extending the JsonObject:
-```
+```python
 import jsonbind as jb
 
 class MyJsonClass(jb.Object):
@@ -81,7 +309,7 @@ output
 
 ### Loading values into an existing object:
 You can also load values from a json string directly into an existing custom JsonObject:
-```
+```python
 import jsonbind as jb
 
 class MyJsonClass(jb.Object):
@@ -109,7 +337,7 @@ output
 
 All objects with type MyJsonClass will produce perfectly formed json when converted to string.
 If you need to retrieve the json string representing the object:
-```
+```python
 import jsonbind as jb
 
 class MyJsonClass(jb.Object):
@@ -132,7 +360,7 @@ output
 ```
 ### Json to object conversion:
 You can create instances of your json objects from strings containing a correct json representation:
-```
+```python
 import jsonbind as jb
 
 class MyJsonClass(jb.Object):
@@ -161,7 +389,7 @@ note: all members are populated with the right values using the same data type d
 
 ### Nested json structures:
 You can create complex structures with nested objects:
-```
+```python
 import jsonbind as jb
 
 class Person(jb.Object):
@@ -189,7 +417,7 @@ output
 
 ### Json lists:
 You can load full lists with values from a json string to a JsonList:
-```
+```python
 import jsonbind as jb
 
 fibonacci = jb.List(list_type=int)
@@ -200,7 +428,7 @@ fibonacci.parse(json_string)
 
 ```
 You can also load a list of json objects:
-```
+```python
 import jsonbind as jb
 
 class Person(jb.Object):
@@ -216,7 +444,7 @@ person_list.parse(json_string)
 
 ```
 Lists can also be used as members of other objects:
-```
+```python
 import jsonbind as jb
 
 class Person(jb.Object):
