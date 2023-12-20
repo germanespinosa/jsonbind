@@ -1,5 +1,5 @@
 import typing
-from .type_binding import TypeBinding, JsonTypes, Bindings
+from jsonbind.core.type_binding import TypeBinding, JsonTypes, Bindings
 
 
 class SetBinding(TypeBinding):

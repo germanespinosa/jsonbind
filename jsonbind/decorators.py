@@ -3,7 +3,7 @@ def json_get_parameters(funct):
         return funct.__parameters__
     else:
         from inspect import signature
-        from .object import JsonObject, JsonList
+        from jsonbind.special.object import JsonObject, JsonList
         parameters = signature(funct).parameters
         __parameters__ = JsonList(list_type=JsonObject)
         for parameter_number, parameter_name in enumerate(parameters):
@@ -30,7 +30,7 @@ def _use_self_or_cls(funct):
 def json_force_parameter_type_function(funct):
     def decorated(*args, **kwargs):
         from inspect import signature
-        from .object import JsonObject, JsonList
+        from jsonbind.special.object import JsonObject, JsonList
         if args:
             args = list(args)
         parameters = signature(funct).parameters
@@ -57,7 +57,7 @@ def json_force_parameter_type_function(funct):
 def json_force_parameter_type_method(funct):
     def decorated(self_or_cls, *args, **kwargs):
         from inspect import signature
-        from .object import JsonObject, JsonList
+        from jsonbind.special.object import JsonObject, JsonList
         if args:
             args = list(args)
         parameters = signature(funct).parameters
@@ -90,7 +90,7 @@ def json_force_parameter_type(funct):
 
 def json_parameters_function(funct):
     def decorated(json_object):
-        from .object import JsonObject
+        from jsonbind.special.object import JsonObject
         if not isinstance(json_object, JsonObject):
             raise TypeError("Parameter must be JsonObject instance")
         p = json_object.to_dict()
@@ -100,9 +100,8 @@ def json_parameters_function(funct):
 
 
 def json_parameters_method(funct):
-    from inspect import signature
     def decorated(self_or_cls, json_object):
-        from .object import JsonObject
+        from jsonbind.special.object import JsonObject
         if not isinstance(json_object, JsonObject):
             raise TypeError("Parameter must be JsonObject instance")
         p = json_object.to_dict()
@@ -120,7 +119,7 @@ def json_parameters(funct):
 
 def json_parse(json_object_type=None):
     def decorator(funct):
-        from .object import JsonObject
+        from jsonbind.special.object import JsonObject
         if _use_self_or_cls(funct):
             if json_object_type:
                 def decorated(self_or_cls, json_string: str):

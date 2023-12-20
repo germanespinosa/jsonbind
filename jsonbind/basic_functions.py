@@ -1,4 +1,4 @@
-from .serialization import Serialization
+from jsonbind.core.serialization import Serialization
 
 
 def loads(json_string: str, cls: type=None):

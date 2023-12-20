@@ -1,4 +1,4 @@
-from .object import JsonObject
+from jsonbind.special.object import JsonObject
 
 class JsonString(str):
     """

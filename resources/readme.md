@@ -4,6 +4,21 @@ JsonBind is an advanced JSON handling library for Python, designed to enhance th
 module. It offers seamless serialization and deserialization of Python data types not typically supported by the default 
 JSON library, including datetime.datetime, tuples, sets, enumerations (enum), bytes, and custom classes.
 
+
+## Installation
+```
+pip install jsonbind
+
+```
+
+
+## Features
+- Compatibility: Functions prototypes designed to match the standard json library.
+- Extended Data Type Support: Handle complex Python data types effortlessly.
+- Custom Class Serialization: Easily serialize and deserialize your custom classes.
+- Intuitive API: Designed to be familiar to users of the standard json module.
+
+
 ## The Python JSON standard library
 
 The standard JSON library in Python expertly facilitates the serialization and deserialization of JSON data types into 
@@ -31,7 +46,10 @@ tuples, sets, datetime objects, bytes, classes, and more. Additionally, JsonBind
 of creating new bindings. This flexibility allows users to seamlessly integrate JSON types with novel Python data types, 
 enhancing the library's adaptability and ease of use in various programming scenarios.
 
-The out-of-the-box bindings provided are:
+To extend the JSON's functionality, multiple bindings can be created for the same json data type. 
+This allows, for example, strings to be decoded as datetime objects and bytes, object to class dictionaries and instances, etc.
+
+### Out-of-the-box bindings
 
 | JSON Data Type | Python Data Type                            |
 |----------------|---------------------------------------------|
@@ -41,7 +59,6 @@ The out-of-the-box bindings provided are:
 | number         | int, float, <span style="color:blue">enum</span>                            |
 | bool           | bool                                        |
 | null           | None                                        |
-
 
 ## Side by side
 
@@ -115,16 +132,84 @@ Output:
 </tr>
 </table>
 
-## Features
-- Compatibility: Functions prototypes designed to match the standard json library.
-- Extended Data Type Support: Handle complex Python data types effortlessly.
-- Custom Class Serialization: Easily serialize and deserialize your custom classes.
-- Intuitive API: Designed to be familiar to users of the standard json module.
 
-## Installation
+### Creating new bindings for python types
+JsonBind allows the creation of new Bindings with very little code. 
+
+In this example a new binding for the type datetime is created to encode to the object Json datatype (dict):
+
+```python
+import jsonbind as jb
+import datetime
+
+class MyDateBinding(jb.TypeBinding):
+    def __init__(self):
+        super().__init__(json_type=dict, python_type=datetime.datetime)
+
+    def to_json_value(self, python_value: datetime.datetime) -> dict:
+        return {"year": python_value.year,
+                "month": python_value.month,
+                "day": python_value.day}
+
+    def to_python_value(self, json_value: dict, python_type: type) -> datetime.datetime:
+        return datetime.datetime(year=json_value["year"],
+                                 month=json_value["month"],
+                                 day=json_value["day"])
+
+jb.Bindings.set_binding(MyDateBinding())
+print(jb.dumps(datetime.datetime.now()))
+
+``` 
+Output:
+```python
+{"year":2023,"month":12,"day":20}
 ```
-pip install jsonbind
+To convert a JSON value to date time using the new binding, we need the following code: 
+```python
+new_date = jb.loads('{"year":2025,"month":10,"day":22}', cls=datetime.datetime)
+print(new_date, type(new_date))
+```
+Output:
+```python
+2025-10-22 00:00:00 <class 'datetime.datetime'>
+```
+JsonBind automatically matches the expected type to the custom binding as there can only exist one binding per python 
+type. This means that in this code the default binding for datetime was replaced during the set_binding operation.
 
+
+### Creating bound classes
+```python
+
+import jsonbind as jb
+import datetime
+
+class MyClass(jb.BoundClass):
+    def __init__(self):
+        self.text = "Hello World"
+        self.date = datetime.datetime.now()
+        self.data = [3,1,4,1,5,9,2]
+
+my_object=MyClass()
+print("Serialization test:")
+print(jb.dumps(my_object))
+new_object = jb.loads('{"text":"Deseralization test","date":"2023-12-23","data":[6,2,8,3,1,8,4]}', cls=MyClass)
+print()
+print("Deserialization test:")
+print ("Text: ",new_object.text, new_object.text.__class__)
+print ("Date: ",new_object.date, new_object.date.__class__)
+print ("Data: ",new_object.data, new_object.data.__class__)
+
+```
+
+Output:
+```python
+Serialization test:
+{"text":"Hello World","date":"2023-12-20","data":[3,1,4,1,5,9,2]}
+
+Deserialization test:
+Text:  Deseralization test <class 'str'>
+Date:  2023-12-23 00:00:00 <class 'datetime.datetime'>
+Data:  [6, 2, 8, 3, 1, 8, 4] <class 'list'>
 ```
 
 ## Standard Json load and dump functions
@@ -232,6 +317,10 @@ output
 Hello World <class 'str'>
 True <class 'bool'>
 ```
+
+# JsonBind Object & List
+JsonBind provides special implementations of Object and List datatypes that provide a lot of functionality to 
+interact with data in JSON format.
 
 
 

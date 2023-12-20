@@ -1,6 +1,6 @@
 import typing
 import json
-from .type_binding import Bindings, JsonTypes
+from ..core.type_binding import Bindings, JsonTypes
 
 
 class Serialization:

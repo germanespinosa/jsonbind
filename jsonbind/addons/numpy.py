@@ -5,7 +5,7 @@ if not spec:
     raise RuntimeError("pandas not installed")
 else:
     import numpy as np
-    from ..object import Object
+    from jsonbind.special.object import Object
     from ..list import List
 
     def to_numpy_array(self):

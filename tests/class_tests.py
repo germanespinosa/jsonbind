@@ -1,10 +1,10 @@
 import unittest
 import sys
 sys.path.append('..')
-from jsonbind import Serialization, Bindings, ClassBinding
+from jsonbind import Serialization, BoundClass
 
 
-class A(object):
+class A(BoundClass):
     def __init__(self):
         self.a = None
         self.b = True
@@ -23,8 +23,6 @@ class A(object):
                 and self.f == other.f
                 and self.g == other.g)
 
-
-Bindings.set_binding(ClassBinding(A))
 
 
 class ClassBindingTests(unittest.TestCase):

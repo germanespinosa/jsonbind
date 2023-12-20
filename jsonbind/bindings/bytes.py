@@ -1,6 +1,6 @@
 import typing
 import base64
-from .type_binding import TypeBinding, JsonTypes, Bindings
+from jsonbind.core.type_binding import TypeBinding, JsonTypes, Bindings
 
 
 class BytesBinding(TypeBinding):

@@ -5,7 +5,7 @@ if not spec:
     raise RuntimeError("pandas not installed")
 else:
     import pandas as pd
-    from ..object import Object
+    from jsonbind.special.object import Object
     from ..list import List
 
 

@@ -1,4 +1,4 @@
-from .serialization import Serialization
+from ..core.serialization import Serialization
 
 
 class Serializable(object):

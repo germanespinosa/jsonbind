@@ -1,9 +1,33 @@
 import unittest
 import sys
 sys.path.append('..')
-
-
 class BoundObjectTests(unittest.TestCase):
+
+    def test_custom_datetime_binding(self):
+        import jsonbind as jb
+        import datetime
+
+        class MyDateBinding(jb.TypeBinding):
+            def __init__(self):
+                super().__init__(json_type=dict, python_type=datetime.datetime)
+
+            def to_json_value(self, python_value: datetime.datetime) -> dict:
+                return {"year": python_value.year,
+                        "month": python_value.month,
+                        "day": python_value.day}
+
+            def to_python_value(self, json_value: dict, python_type: type) -> datetime.datetime:
+                return datetime.datetime(year=json_value["year"],
+                                         month=json_value["month"],
+                                         day=json_value["day"])
+
+        jb.Bindings.set_binding(MyDateBinding())
+        print(jb.dumps(datetime.datetime.now()))
+
+        new_date = jb.loads('{"year":2025,"month":10,"day":22}', cls=datetime.datetime)
+        print(new_date, type(new_date))
+
+        jb.Bindings.set_binding(jb.DateTimeBinding(jb.DateTimeBinding.Format.time_stamp))
 
     def test_standard_loads(self):
         import jsonbind as jb
@@ -42,11 +66,27 @@ class BoundObjectTests(unittest.TestCase):
         myset = jb.loads('[1, 2, 3, 4]', cls=set)
         print(myset, type(myset))
         import datetime
-        mydate = jb.loads('"2023-12-19"', cls=datetime.datetime)
+        mydate = jb.loads('"2023-12-19 15:20:18.000"', cls=datetime.datetime)
         print(mydate, type(mydate))
         mybytes=jb.loads('"SGVsbG8gV29ybGQ="', cls=bytes)
         print (mybytes, type(mybytes))
 
+    def test_bound_class(self):
+        import jsonbind as jb
+        import datetime
+
+        class MyClass(jb.BoundClass):
+            def __init__(self):
+                self.text = "Hello World"
+                self.date = datetime.datetime.now()
+                self.data = [3, 1, 4, 1, 5, 9, 2]
+
+        my_object = MyClass()
+        print(jb.dumps(my_object))
+        new_object = jb.loads('{"text":"Deseralization test","date":"2023-12-23","data":[6,2,8,3,1,8,4]}', MyClass)
+        print("Text: ", new_object.text, new_object.text.__class__)
+        print("Date: ", new_object.date, new_object.date.__class__)
+        print("Data: ", new_object.data, new_object.data.__class__)
 
 
 if __name__ == '__main__':
