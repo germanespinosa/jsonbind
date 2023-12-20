@@ -1,150 +1,54 @@
-def json_get_parameters(funct):
-    if hasattr(funct, "__parameters__"):
-        return funct.__parameters__
-    else:
-        from inspect import signature
-        from jsonbind.special.object import JsonObject, JsonList
-        parameters = signature(funct).parameters
-        __parameters__ = JsonList(list_type=JsonObject)
-        for parameter_number, parameter_name in enumerate(parameters):
-            if parameter_number == 0 and (parameter_name == "self" or parameter_name == "cls"):
-                continue
-            __parameters__.append(JsonObject(name=parameter_name,
-                                             type=parameters[parameter_name].annotation.__name__))
-        return __parameters__
+from .core import Bindings, Serialization
 
 
-def _use_self_or_cls(funct):
-    from inspect import signature, _empty
-    s = signature(funct)
-    b = "self" in s.parameters and s.parameters["self"].annotation is _empty
-    if b:
-        return b
-    b = "cls" in s.parameters and s.parameters["cls"].annotation is _empty
-    if b:
-        return b
-    b = "self_or_cls" in s.parameters and s.parameters["self_or_cls"].annotation is _empty
-    return b
+def parse_parameters(funct):
+    import inspect
+    sig = inspect.signature(funct)
+    params_bindings = dict()
 
-
-def json_force_parameter_type_function(funct):
-    def decorated(*args, **kwargs):
-        from inspect import signature
-        from jsonbind.special.object import JsonObject, JsonList
-        if args:
-            args = list(args)
-        parameters = signature(funct).parameters
-        for pi, p in enumerate(parameters):
-            if issubclass(parameters[p].annotation, JsonObject) and parameters[p].annotation is not JsonObject:
-                if p in kwargs and isinstance(kwargs[p], JsonObject):
-                    kwargs[p] = kwargs[p].into(parameters[p].annotation)
-                if pi < len(args):
-                    args.insert(pi, args.pop(pi).into(parameters[p].annotation))
-            elif issubclass(parameters[p].annotation, JsonList) and parameters[p].annotation is not JsonList:
-                if p in kwargs and isinstance(kwargs[p], JsonList):
-                    kwargs[p] = kwargs[p].into(parameters[p].annotation)
-                if pi < len(args):
-                    args.insert(pi, args.pop(pi).into(parameters[p].annotation))
-            elif p in kwargs and type(kwargs[p]) is str and parameters[p].annotation is not str:
-                kwargs[p] = parameters[p].annotation(kwargs[p])
-                if pi < len(args):
-                    args.insert(pi, args.pop(pi).into(parameters[p].annotation))
-        return funct(*args, **kwargs)
-    decorated.__parameters__ = json_get_parameters(funct)
-    return decorated
-
-
-def json_force_parameter_type_method(funct):
-    def decorated(self_or_cls, *args, **kwargs):
-        from inspect import signature
-        from jsonbind.special.object import JsonObject, JsonList
-        if args:
-            args = list(args)
-        parameters = signature(funct).parameters
-        for pi, p in enumerate(parameters):
-            if issubclass(parameters[p].annotation, JsonObject) and parameters[p].annotation is not JsonObject:
-                if p in kwargs and isinstance(kwargs[p], JsonObject):
-                    kwargs[p] = kwargs[p].into(parameters[p].annotation)
-                if pi < len(args):
-                    args.insert(pi, args.pop(pi).into(parameters[p].annotation))
-            elif issubclass(parameters[p].annotation, JsonList) and parameters[p].annotation is not JsonList:
-                if p in kwargs and isinstance(kwargs[p], JsonList):
-                    kwargs[p] = kwargs[p].into(parameters[p].annotation)
-                if pi < len(args):
-                    args.insert(pi, args.pop(pi).into(parameters[p].annotation))
-            elif p in kwargs and type(kwargs[p]) is str and parameters[p].annotation is not str:
-                kwargs[p] = parameters[p].annotation(kwargs[p])
-                if pi < len(args):
-                    args.insert(pi, args.pop(pi).into(parameters[p].annotation))
-        return funct(self_or_cls, *args, **kwargs)
-    decorated.__parameters__ = json_get_parameters(funct)
-    return decorated
-
-
-def json_force_parameter_type(funct):
-    if _use_self_or_cls(funct):
-        return json_force_parameter_type_method(funct)
-    else:
-        return json_force_parameter_type_function(funct)
-
-
-def json_parameters_function(funct):
-    def decorated(json_object):
-        from jsonbind.special.object import JsonObject
-        if not isinstance(json_object, JsonObject):
-            raise TypeError("Parameter must be JsonObject instance")
-        p = json_object.to_dict()
-        return funct(**p)
-    decorated.__parameters__ = json_get_parameters(funct)
-    return decorated
-
-
-def json_parameters_method(funct):
-    def decorated(self_or_cls, json_object):
-        from jsonbind.special.object import JsonObject
-        if not isinstance(json_object, JsonObject):
-            raise TypeError("Parameter must be JsonObject instance")
-        p = json_object.to_dict()
-        return funct(self_or_cls, **p)
-    decorated.__parameters__ = json_get_parameters(funct)
-    return decorated
-
-
-def json_parameters(funct):
-    if _use_self_or_cls(funct):
-        return json_parameters_method(funct)
-    else:
-        return json_parameters_function(funct)
-
-
-def json_parse(json_object_type=None):
-    def decorator(funct):
-        from jsonbind.special.object import JsonObject
-        if _use_self_or_cls(funct):
-            if json_object_type:
-                def decorated(self_or_cls, json_string: str):
-                    return funct(self_or_cls, json_object_type.parse(json_string))
-            else:
-                def decorated(self_or_cls, json_string: str):
-                    return funct(self_or_cls, JsonObject.load(json_string))
+    var_keyword = is_method = is_class = False
+    for parameter_name, parameter in sig.parameters.items():
+        if parameter_name == "self":
+            is_method = True
+            continue
+        if parameter_name == "cls":
+            is_class = True
+            continue
+        if parameter.kind == parameter.VAR_KEYWORD:
+            var_keyword = True
+            continue
+        if parameter.annotation:
+            params_bindings[parameter_name] = Bindings.find_binding(parameter.annotation)
         else:
-            if json_object_type:
-                def decorated(json_string: str):
-                    return funct(json_object_type.parse(json_string))
-            else:
-                def decorated(json_string: str):
-                    return funct(JsonObject.load(json_string))
-        decorated.__parameters__ = json_get_parameters(funct)
-        return decorated
-    if not type(json_object_type) is type:
-        funct = json_object_type
-        json_object_type = None
-        return decorator(funct)
-    return decorator
+            params_bindings[parameter_name] = None
 
+    def get_parsed_parameters(json_string:str) -> dict:
+        params_dict = Serialization.deserialize(json_string=json_string, python_type=dict)
+        parsed_params = dict()
+        for parameter_name, parameter_value in params_dict.items():
+            print(parameter_name, parameter_value)
+            if parameter_name in params_bindings:
+                binding = params_bindings[parameter_name]
+                if binding:
+                    parsed_params[parameter_name] = binding.to_python_value(parameter_value)
+                else:
+                    parsed_params[parameter_name] = parameter_value
+            elif var_keyword:
+                parsed_params[parameter_name] = parameter_value
+        return parsed_params
 
-class classorinstancemethod(classmethod):
+    if is_method:
+        def parsed_parameters(self, json_string: str):
+            parsed_params = get_parsed_parameters(json_string=json_string)
+            return funct(self, **parsed_params)
+    elif is_class:
+        def parsed_parameters(cls, json_string: str):
+            parsed_params = get_parsed_parameters(json_string=json_string)
+            return funct(cls, **parsed_params)
+    else:
+        def parsed_parameters(json_string: str):
+            parsed_params = get_parsed_parameters(json_string=json_string)
+            return funct(**parsed_params)
 
-    def __get__(self, instance, type_):
-        descr_get = super().__get__ if instance is None else self.__func__.__get__
-        return descr_get(instance, type_)
+    parsed_parameters.__name__ = funct.__name__
+    return parsed_parameters

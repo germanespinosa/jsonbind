@@ -56,7 +56,7 @@ class Bindings(object):
 
     @staticmethod
     def is_bonded(python_type: type) -> bool:
-        return Bindings.get_binding(python_type=python_type) is not None
+        return Bindings.find_binding(python_type=python_type) is not None
 
     @staticmethod
     def find_binding(python_type: type) -> typing.Union[None, TypeBinding]:

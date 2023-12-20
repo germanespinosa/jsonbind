@@ -5,8 +5,8 @@ if not spec:
     raise RuntimeError("pandas not installed")
 else:
     import pandas as pd
-    from jsonbind.special.object import Object
-    from ..list import List
+    from ..special.object import Object
+    from ..special.list import List
 
 
     def to_data_series(self) -> pd.Series:
