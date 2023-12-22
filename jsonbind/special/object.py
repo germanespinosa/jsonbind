@@ -19,12 +19,6 @@ class Object(Serializable):
         return True
 
     def get_members(self) -> typing.List[typing.Tuple[str, typing.Any]]:
-        """
-        Retrieve all member variables of the JsonObject that don't start with an underscore.
-
-        Returns:
-            list: List of member attribute names.
-        """
         members: typing.List[typing.Tuple[str, typing.Any]] = list()
         for key, value in self.__dict__.items():
             if not key or key.startswith('_'):
@@ -33,12 +27,6 @@ class Object(Serializable):
         return members
 
     def get_columns(self) -> typing.List[typing.Tuple[str, type]]:
-        """
-        Retrieve the names of all columns contained within the JsonObject.
-
-        Returns:
-            list: List of all column names in the Object.
-        """
         columns: typing.List[typing.Tuple[str, type]] = list()
         for key, value in self.__dict__.items():
             if not key or key.startswith('_'):
@@ -50,12 +38,6 @@ class Object(Serializable):
         return columns
 
     def get_numeric_columns(self) -> typing.List[typing.Tuple[str, type]]:
-        """
-        Retrieve the names of all numeric columns contained within the Object.
-
-        Returns:
-            list: List of all numeric column names in the Object.
-        """
         columns: typing.List[typing.Tuple[str, type]] = list()
         for key, value in self.__dict__.items():
             if not key or key.startswith('_'):
@@ -68,12 +50,6 @@ class Object(Serializable):
         return columns
 
     def get_values(self) -> typing.List[typing.Tuple[str, typing.Any]]:
-        """
-        Retrieve all values contained within the JsonObject.
-
-        Returns:
-            JsonList: List containing all values from the JsonObject.
-        """
         values = list()
         for key, value in self.__dict__.items():
             if not key or key.startswith('_'):
@@ -85,12 +61,6 @@ class Object(Serializable):
         return values
 
     def get_numeric_values(self) -> typing.List[typing.Tuple[str, Number]]:
-        """
-        Retrieve numeric values contained within the JsonObject.
-
-        Returns:
-            JsonList: List containing numeric values from the JsonObject.
-        """
         values: typing.List[typing.Tuple[str, Number]] = list()
         for key, value in self.__dict__.items():
             if not key or key.startswith('_'):
@@ -103,29 +73,10 @@ class Object(Serializable):
         return values
 
     def set_values(self, values: typing.List[typing.Tuple[str, typing.Any]]):
-        """
-        Set values for the Object given a list of values.
-
-        Parameters:
-            values (list): List of values to set in the JsonObject.
-
-        """
         for column_name, column_value in values:
             Object.__setitem__(self, column_name, column_value)
 
     def convert_to(self, cls: type) -> "Object":
-        """
-        Convert the current jsonbind.Object into an instance of another jsonbind.Object-derived class.
-
-        Parameters:
-            cls (type): The target jsonbind.Object-derived class to convert to.
-
-        Returns:
-            JsonObject-derived instance: The converted object.
-
-        Raises:
-            RuntimeError: If provided type does not derive from JsonObject.
-        """
         if not issubclass(cls, Object):
             raise RuntimeError("type must derive from jsonbind.Object")
         values = self.get_values()
@@ -134,15 +85,6 @@ class Object(Serializable):
         return nv
 
     def __getitem__(self, key: str) -> typing.Any:
-        """
-        Retrieve the value associated with a given key or nested key.
-
-        Parameters:
-            key (str): The attribute name or nested key to retrieve.
-
-        Returns:
-            Any: Value associated with the key.
-        """
         pos = key.find(".")
         if pos >= 0:
             child_key = key[pos+1:]
@@ -161,13 +103,6 @@ class Object(Serializable):
             return self.__dict__[key]
 
     def __setitem__(self, key, value):
-        """
-        Set the value associated with a given key or nested key.
-
-        Parameters:
-            key (str): The attribute name or nested key to assign a value to.
-            value (Any): The value to set for the given key.
-        """
         pos = key.find(".")
         if pos >= 0:
             child_key = key[pos+1:]
