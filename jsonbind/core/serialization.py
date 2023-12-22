@@ -29,12 +29,5 @@ class Serialization:
 
         return bond.to_python_value(json_value=json_value, python_type=python_type)
 
-    @staticmethod
-    def set_default_binding(json_type: typing.Union[JsonTypes],
-                            python_type: type) -> None:
-
-        if python_type not in Bindings.bonded_python_types():
-            raise TypeError("python type '%s' does not have binding")
-        Serialization.__default_bonds__[json_type] = python_type
 
 
