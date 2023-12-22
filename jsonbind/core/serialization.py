@@ -26,6 +26,7 @@ class Serialization:
         else:
             json_type = json_value.__class__
             bond = Bindings.get_default_binding(json_type=json_type)
+            python_type = bond.python_type
 
         return bond.to_python_value(json_value=json_value, python_type=python_type)
 

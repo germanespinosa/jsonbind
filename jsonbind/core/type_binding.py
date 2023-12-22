@@ -132,6 +132,8 @@ class BaseBinding(TypeBinding):
         return python_value
 
     def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
+        if python_type is not self.python_type:
+            return python_type(json_value)
         return json_value
 
 
