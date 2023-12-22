@@ -48,7 +48,7 @@ class BoundObjectTests(unittest.TestCase):
 
     def test_standard_dumps(self):
         import jsonbind as jb
-        mydict = {"name":"German Espinosa","age":41,"weight":190.0}
+        mydict = {"name": "German Espinosa", "age": 41, "weight": 190.0}
         print(jb.dumps(mydict), type(mydict))
         mylist = [1, 2, 3, 4]
         print(jb.dumps(mylist), type(mylist))
@@ -85,7 +85,7 @@ class BoundObjectTests(unittest.TestCase):
 
         my_object = MyClass()
         print(jb.dumps(my_object))
-        new_object = jb.loads('{"text":"Deseralization test","date":"2023-12-23","data":[6,2,8,3,1,8,4]}', MyClass)
+        new_object = jb.loads('{"text":"Deseralization test","date":"2023-12-23 00:00:00.000","data":[6,2,8,3,1,8,4]}', MyClass)
         print("Text: ", new_object.text, new_object.text.__class__)
         print("Date: ", new_object.date, new_object.date.__class__)
         print("Data: ", new_object.data, new_object.data.__class__)
