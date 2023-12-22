@@ -26,6 +26,5 @@ class DateTimeTests(unittest.TestCase):
         self.assertEqual(Serialization.deserialize('"20:10:35.000000"', datetime.time), dt)
 
 
-
 if __name__ == '__main__':
     unittest.main()
