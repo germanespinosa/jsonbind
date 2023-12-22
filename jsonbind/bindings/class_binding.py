@@ -1,5 +1,4 @@
-import typing
-from jsonbind.core.type_binding import TypeBinding, JsonTypes, Bindings
+from jsonbind.core.type_binding import TypeBinding, Bindings
 
 
 class BoundClass(object):
@@ -22,16 +21,19 @@ class BoundClass(object):
                 new_bound_object.__dict__[key] = value
         return new_bound_object
 
+
 class ClassBinding(TypeBinding):
 
     def __init__(self):
         super().__init__(json_type=dict, python_type=BoundClass)
 
-    def to_json_value(self, python_value: BoundClass) -> typing.Union[JsonTypes]:
+    def to_json_value(self, python_value: BoundClass) -> dict:
         json_value = python_value.__to_json_dict__()
         return json_value
 
     def to_python_value(self, json_value: dict, python_type: type) -> BoundClass:
+        if not issubclass(python_type, BoundClass):
+            raise TypeError("python_type must inherit from BoundClass".format(python_type.__name__))
         return python_type.__from_json_dict__(values=json_value)
 
 

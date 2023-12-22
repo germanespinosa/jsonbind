@@ -1,6 +1,6 @@
 import typing
 from jsonbind.core.type_binding import TypeBinding, JsonTypes, Bindings
-from jsonbind.core.serializable import Serializable
+from jsonbind.special.serializable import Serializable
 
 Number = typing.Union[bool, int, float]
 

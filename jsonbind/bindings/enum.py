@@ -8,10 +8,10 @@ class EnumBinding(TypeBinding):
     def __init__(self):
         super().__init__(json_type=str, python_type=enum.Enum)
 
-    def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
+    def to_json_value(self, python_value: enum.Enum) -> str:
         return python_value.name
 
-    def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
+    def to_python_value(self, json_value: str, python_type: type) -> enum.Enum:
         return python_type[json_value]
 
 
@@ -34,5 +34,5 @@ class EnumValueBinding(TypeBinding):
     def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
         return self.json_type(python_value.value)
 
-    def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
+    def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> enum.Enum:
         return python_type(json_value)

@@ -1,6 +1,6 @@
 import typing
 from ..core.type_binding import TypeBinding, JsonTypes, Bindings
-from ..core.serializable import Serializable
+from jsonbind.special.serializable import Serializable
 from .util import bin_search, SearchType, SortOrder, NotFoundBehavior
 
 

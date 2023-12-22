@@ -1,6 +1,6 @@
 import datetime
 import typing
-from jsonbind.core.type_binding import TypeBinding, JsonTypes, Bindings
+from jsonbind.core.type_binding import TypeBinding, Bindings
 from enum import Enum
 
 class DateTimeBinding(TypeBinding):
@@ -11,16 +11,16 @@ class DateTimeBinding(TypeBinding):
         short_time = "%H:%M:%S"
         tiny_time = "%H:%M"
 
-    def __init__(self, date_format: typing.Union[str, "DateTimeBinding.Format"] ):
+    def __init__(self, date_format: typing.Union[str, "DateTimeBinding.Format"]):
         if isinstance(date_format, DateTimeBinding.Format):
             date_format = date_format.value
         super().__init__(json_type=str, python_type=datetime.datetime)
         self.date_format = date_format
 
-    def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
+    def to_json_value(self, python_value: datetime.datetime) -> str:
         return python_value.strftime(self.date_format)
 
-    def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
+    def to_python_value(self, json_value: str, python_type: type) -> datetime.datetime:
         return datetime.datetime.strptime(json_value, self.date_format)
 
 

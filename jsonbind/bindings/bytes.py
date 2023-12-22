@@ -1,6 +1,5 @@
-import typing
 import base64
-from jsonbind.core.type_binding import TypeBinding, JsonTypes, Bindings
+from jsonbind.core.type_binding import TypeBinding, Bindings
 
 
 class BytesBinding(TypeBinding):
@@ -8,10 +7,10 @@ class BytesBinding(TypeBinding):
         super().__init__(json_type=str, python_type=bytes)
         self.encoding = encoding
 
-    def to_json_value(self, python_value: typing.Any) -> typing.Union[JsonTypes]:
+    def to_json_value(self, python_value: bytes) -> str:
         return base64.b64encode(python_value).decode(self.encoding)
 
-    def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
+    def to_python_value(self, json_value: str, python_type: type) -> bytes:
         return base64.b64decode(json_value)
 
 

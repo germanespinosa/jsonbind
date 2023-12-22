@@ -4,10 +4,10 @@ from ..core.type_binding import Bindings, JsonTypes
 
 
 class Serialization:
-    __default_bonds__: typing.Dict[type, type] = {python_type: python_type for python_type in JsonTypes}
 
     @staticmethod
     def serialize(python_value: typing.Any, **kwargs) -> str:
+
         if "separators" not in kwargs:
             kwargs["separators"] = (',', ':')
         value_type = python_value.__class__
@@ -17,19 +17,22 @@ class Serialization:
         raise TypeError("value type '%s' is not serializable" % value_type.__name__)
 
     @staticmethod
-    def deserialize(json_string: str, python_type: type = None, **kwargs) -> typing.Any:
-        json_value = json.loads(json_string, **kwargs)
-        json_type = json_value.__class__
-        if python_type is None:
-            python_type = Serialization.__default_bonds__[json_type]
+    def deserialize(json_string: str,
+                    python_type: type = None, **kwargs) -> typing.Any:
 
-        bond = Bindings.get_binding(python_type)
-        if bond:
-            return bond.to_python_value(json_value=json_value, python_type=python_type)
-        raise TypeError("value type '%s' is not deserializable" % json_type.__name__)
+        json_value = json.loads(json_string, **kwargs)
+        if python_type:
+            bond = Bindings.get_binding(python_type=python_type)
+        else:
+            json_type = json_value.__class__
+            bond = Bindings.get_default_binding(json_type=json_type)
+
+        return bond.to_python_value(json_value=json_value, python_type=python_type)
 
     @staticmethod
-    def set_default_binding(json_type: typing.Union[JsonTypes], python_type: type) -> None:
+    def set_default_binding(json_type: typing.Union[JsonTypes],
+                            python_type: type) -> None:
+
         if python_type not in Bindings.bonded_python_types():
             raise TypeError("python type '%s' does not have binding")
         Serialization.__default_bonds__[json_type] = python_type

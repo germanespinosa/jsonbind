@@ -43,8 +43,6 @@ class TypeBindingTests(unittest.TestCase):
         self.assertRaises(TypeError, b.__convert_to_python_type__, 10, int)
 
 
-
-
 class BindingManagerTests(unittest.TestCase):
     def test_get_bond(self):
         bond = Bindings.get_binding(str)
@@ -58,6 +56,14 @@ class BindingManagerTests(unittest.TestCase):
         class Test(object):
             pass
         self.assertRaises(TypeError, Bindings.get_binding, Test)
+
+    def test_default_binding(self):
+        self.assertEqual(Bindings.to_python_value(10), 10)
+        self.assertEqual(Bindings.to_python_value(10.5), 10.5)
+        self.assertEqual(Bindings.to_python_value(None), None)
+        self.assertEqual(Bindings.to_python_value("Hello World"), "Hello World")
+        self.assertEqual(Bindings.to_python_value([1,2,3,4]), [1, 2, 3, 4])
+        self.assertEqual(Bindings.to_python_value({"a": 10, "b": 20}), {"a": 10, "b": 20})
 
 
 if __name__ == '__main__':
