@@ -1,7 +1,7 @@
 import unittest
 import sys
 sys.path.append('..')
-from jsonbind import Serialization
+from jsonbind.core import Serialization
 
 
 class SetTests(unittest.TestCase):

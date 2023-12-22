@@ -3,7 +3,7 @@ import typing
 import unittest
 
 sys.path.append('..')
-from jsonbind import TypeBinding, Bindings
+from jsonbind.core import TypeBinding, Bindings
 
 
 class CustomBinding(TypeBinding):

@@ -2,8 +2,8 @@ import unittest
 import sys
 import enum
 sys.path.append('..')
-from jsonbind import Serialization, Bindings, EnumValueBinding
-
+from jsonbind.core import Serialization, Bindings
+from jsonbind.bindings import EnumValueBinding
 
 class TestEnum1(enum.Enum):
     value1 = 1

@@ -1,7 +1,8 @@
 import unittest
 import sys
 sys.path.append('..')
-from jsonbind import Serialization, Object, String
+from jsonbind.core import Serialization
+from jsonbind.special import Object, String
 
 
 class StringTests(unittest.TestCase):

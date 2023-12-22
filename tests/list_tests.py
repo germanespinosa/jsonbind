@@ -1,8 +1,8 @@
 import unittest
 import sys
 sys.path.append('..')
-from jsonbind import Serialization, List, Object, NotFoundBehavior, SortOrder
-
+from jsonbind.core import Serialization
+from jsonbind.special import List, Object, NotFoundBehavior, SortOrder
 
 class ListTests(unittest.TestCase):
     def test_list_serialization(self):

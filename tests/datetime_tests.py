@@ -2,8 +2,8 @@ import datetime
 import unittest
 import sys
 sys.path.append('..')
-from jsonbind import Serialization, DateTimeBinding, Bindings
-
+from jsonbind.core import Serialization, Bindings
+from jsonbind.bindings import DateTimeBinding
 
 class DateTimeTests(unittest.TestCase):
     def test_bytes_serialization(self):

@@ -1,7 +1,7 @@
 import unittest
 import sys
 sys.path.append('..')
-from jsonbind import Object, List
+from jsonbind.special import List, Object
 from jsonbind.addons import pandas
 
 class PandasAddonTests(unittest.TestCase):

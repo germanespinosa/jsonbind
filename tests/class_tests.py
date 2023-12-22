@@ -1,7 +1,8 @@
 import unittest
 import sys
 sys.path.append('..')
-from jsonbind import Serialization, BoundClass
+from jsonbind.bindings import BoundClass
+from jsonbind.core import Serialization
 
 
 class A(BoundClass):
@@ -22,7 +23,6 @@ class A(BoundClass):
                 and self.e == other.e
                 and self.f == other.f
                 and self.g == other.g)
-
 
 
 class ClassBindingTests(unittest.TestCase):

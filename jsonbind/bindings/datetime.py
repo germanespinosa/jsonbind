@@ -3,6 +3,7 @@ import typing
 from jsonbind.core.type_binding import TypeBinding, Bindings
 from enum import Enum
 
+
 class DateTimeBinding(TypeBinding):
     class Format(Enum):
         time_stamp = "%Y-%m-%d %H:%M:%S.%f"

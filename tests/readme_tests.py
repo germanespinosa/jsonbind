@@ -1,6 +1,8 @@
 import unittest
 import sys
 sys.path.append('..')
+
+
 class BoundObjectTests(unittest.TestCase):
 
     def test_custom_datetime_binding(self):
@@ -21,13 +23,13 @@ class BoundObjectTests(unittest.TestCase):
                                          month=json_value["month"],
                                          day=json_value["day"])
 
-        jb.Bindings.set_binding(MyDateBinding())
+        jb.core.Bindings.set_binding(MyDateBinding())
         print(jb.dumps(datetime.datetime.now()))
 
         new_date = jb.loads('{"year":2025,"month":10,"day":22}', cls=datetime.datetime)
         print(new_date, type(new_date))
 
-        jb.Bindings.set_binding(jb.DateTimeBinding(jb.DateTimeBinding.Format.time_stamp))
+        jb.Bindings.set_binding(jb.bindings.DateTimeBinding(jb.bindings.DateTimeBinding.Format.time_stamp))
 
     def test_standard_loads(self):
         import jsonbind as jb
@@ -75,7 +77,7 @@ class BoundObjectTests(unittest.TestCase):
         import jsonbind as jb
         import datetime
 
-        class MyClass(jb.BoundClass):
+        class MyClass(jb.bindings.BoundClass):
             def __init__(self):
                 self.text = "Hello World"
                 self.date = datetime.datetime.now()
