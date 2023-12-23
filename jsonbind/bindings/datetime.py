@@ -27,7 +27,7 @@ class DateTimeBinding(TypeBinding):
 
     def to_python_value(self, json_value: str,
                         python_type: type) -> datetime.datetime:
-        return datetime.datetime.strptime(json_value, self.date_format)
+        return python_type.strptime(json_value, self.date_format)
 
 
 class DateBinding(TypeBinding):
