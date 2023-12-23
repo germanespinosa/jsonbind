@@ -4,3 +4,4 @@ from .core import TypeBinding, Bindings, Serialization, JsonTypes
 from . import bindings
 from . import special
 from . import addons
+from .bindings import BoundClass
