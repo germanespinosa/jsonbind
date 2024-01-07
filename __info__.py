@@ -1,5 +1,5 @@
 def __module_version__():
-	return 0, 0, 16 
+	return 0, 0, 17 
 
 def __module_name__():
 	return 'jsonbind' 
