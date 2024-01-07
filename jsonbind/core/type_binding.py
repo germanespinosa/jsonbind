@@ -161,7 +161,7 @@ class DictBinding(BaseBinding):
         json_value = dict()
         for key, value in python_value.items():
             json_value[key] = Bindings.to_json_value(value)
-        return python_value
+        return json_value
 
     def to_python_value(self, json_value: typing.Union[JsonTypes], python_type: type) -> typing.Any:
         return json_value
